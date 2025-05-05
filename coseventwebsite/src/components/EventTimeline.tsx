@@ -15,96 +15,31 @@ export type Event = {
 };
 
 export default function EventTimeline({ events = [] }: { events?: Event[] }) {
-  const [continentFilter, setContinentFilter] = useState('Alle');
-  const [countryFilter, setCountryFilter] = useState('Alle');
-  const [cityFilter, setCityFilter] = useState('Alle');
-
-  // Midlertidig filtrering basert på tekst, frem til en ny løsning kommer
-  const enrichedEvents = useMemo(() => {
-    return events.map((e) => {
-      const locationParts = e.location.split(',').map((p) => p.trim());
-      const [city, country, continent] = locationParts;
-      return {
-        ...e,
-        city: city || 'Ukjent',
-        country: country || 'Ukjent',
-        continent: continent || 'Ukjent',
-      };
-    });
-  }, [events]);
-
-  const continents = useMemo(() => {
-    const all = enrichedEvents.map((e) => e.continent);
-    return ['Alle', ...Array.from(new Set(all))];
-  }, [enrichedEvents]);
-
-  const countries = useMemo(() => {
-    const filtered = continentFilter === 'Alle'
-      ? enrichedEvents
-      : enrichedEvents.filter((e) => e.continent === continentFilter);
-    const all = filtered.map((e) => e.country);
-    return ['Alle', ...Array.from(new Set(all))];
-  }, [enrichedEvents, continentFilter]);
-
-  const cities = useMemo(() => {
-    const filtered = enrichedEvents.filter((e) => {
-      const matchContinent = continentFilter === 'Alle' || e.continent === continentFilter;
-      const matchCountry = countryFilter === 'Alle' || e.country === countryFilter;
-      return matchContinent && matchCountry;
-    });
-    const all = filtered.map((e) => e.city);
-    return ['Alle', ...Array.from(new Set(all))];
-  }, [enrichedEvents, continentFilter, countryFilter]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredEvents = useMemo(() => {
-    return enrichedEvents.filter((e) => {
-      const matchContinent = continentFilter === 'Alle' || e.continent === continentFilter;
-      const matchCountry = countryFilter === 'Alle' || e.country === countryFilter;
-      const matchCity = cityFilter === 'Alle' || e.city === cityFilter;
-      return matchContinent && matchCountry && matchCity;
-    });
-  }, [enrichedEvents, continentFilter, countryFilter, cityFilter]);
+    if (!searchQuery.trim()) return events;
+    const lowerQuery = searchQuery.toLowerCase();
+    return events.filter((e) => e.location.toLowerCase().includes(lowerQuery));
+  }, [events, searchQuery]);
 
   return (
     <div>
-      {/* Filtre */}
-      <div className="gap-4 mb-6 space-y-2 md:space-y-0 md:flex">
-        <select
-          className="bg-black border border-[var(--cosevent-yellow)] text-white px-2 py-1 rounded"
-          value={continentFilter}
-          onChange={(e) => {
-            setContinentFilter(e.target.value);
-            setCountryFilter('Alle');
-            setCityFilter('Alle');
-          }}
-        >
-          {continents.map((c) => <option key={c}>{c}</option>)}
-        </select>
-
-        <select
-          className="bg-black border border-[var(--cosevent-yellow)] text-white px-2 py-1 rounded"
-          value={countryFilter}
-          onChange={(e) => {
-            setCountryFilter(e.target.value);
-            setCityFilter('Alle');
-          }}
-        >
-          {countries.map((c) => <option key={c}>{c}</option>)}
-        </select>
-
-        <select
-          className="bg-black border border-[var(--cosevent-yellow)] text-white px-2 py-1 rounded"
-          value={cityFilter}
-          onChange={(e) => setCityFilter(e.target.value)}
-        >
-          {cities.map((c) => <option key={c}>{c}</option>)}
-        </select>
+      {/* Søkeinput */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Søk etter by, land eller sted..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full md:w-1/2 bg-black border border-[var(--cosevent-yellow)] text-white px-3 py-2 rounded"
+        />
       </div>
 
       {/* Timeline */}
       <div className="relative border-l-2 border-[var(--cosevent-white)] pl-6 space-y-10">
         {filteredEvents.length === 0 ? (
-          <p className="text-white/60">Ingen eventer funnet for valgt filter.</p>
+          <p className="text-white/60">Ingen eventer funnet.</p>
         ) : (
           filteredEvents.map((event) => (
             <div key={event.id} className="relative group">
