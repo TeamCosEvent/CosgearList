@@ -27,23 +27,8 @@ export default function ConventionsPage() {
     async function fetchConventions() {
       try {
         const snapshot = await getDocs(collection(db, 'conventions'));
-
-        const docs = snapshot.docs.map((doc) => {
-          const raw = doc.data() as Omit<Event, 'id'>;
-          return {
-            id: doc.id,
-            ...raw,
-          };
-        });
-
-        const visibleOnly = docs.filter((event) => {
-          const isVisible = event.isVisible !== false;
-          const eventTime = parseDate(event.date);
-          const now = Date.now();
-          return isVisible && eventTime >= now;
-        });
-                const sorted = visibleOnly.sort((a, b) => parseDate(a.date) - parseDate(b.date));
-
+        const docs = snapshot.docs.map(doc => doc.data() as Event);
+        const sorted = docs.sort((a, b) => parseDate(a.date) - parseDate(b.date));
         setEvents(sorted);
       } catch (err) {
         console.error("Kunne ikke hente eventer:", err);
@@ -55,13 +40,13 @@ export default function ConventionsPage() {
   }, []);
 
   return (
-    <main className="flex flex-col items-center px-4 md:px-16 py-16 bg-[var(--cosevent-bg)] text-[var(--cosevent-text-light)] font-sans">
+    <main className="flex flex-col items-center px-4 md:px-16 py-16 bg-[var(--cosevent-bg)] text-white font-sans">
       <div className="w-full max-w-5xl">
-        <h2 className="text-4xl md:text-5xl font-bold text-[var(--cosevent-white)] mb-4">
+        <h2 className="text-4xl md:text-5xl font-bold text-[var(--cosevent-yellow)] mb-4">
           Kommende cosplay conventions
         </h2>
 
-        <h3 className="mb-8 text-lg text-[var(--cosevent-text-muted)]">
+        <h3 className="mb-8 text-lg">
           Her finner du en oversikt over planlagte conventions i Norge og Norden. Listen oppdateres automatisk. Klikk på lenkene for mer info.
         </h3>
 
@@ -74,7 +59,7 @@ export default function ConventionsPage() {
             <EventTimeline events={events} />
           </div>
         ) : !error ? (
-          <p className="text-[var(--cosevent-text-muted)]">Ingen conventions funnet.</p>
+          <p className="text-white/60">Ingen conventions funnet.</p>
         ) : null}
       </div>
     </main>
