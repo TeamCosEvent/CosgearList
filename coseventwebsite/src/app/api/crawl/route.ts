@@ -3,9 +3,19 @@ import puppeteer from 'puppeteer';
 import { db } from '../../../firebase/firebaseConfig';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
+// Sørger for at ruten aldri caches
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // Beskytt API mot å kjøre i Vercel production build
+  if (process.env.VERCEL_ENV === 'production' && process.env.NEXT_RUNTIME !== 'edge') {
+    console.warn('Crawl-ruten forsøkt kalt i produksjonsmiljø. Returnerer 403.');
+    return NextResponse.json(
+      { message: 'Crawling er deaktivert i produksjonsmiljø.' },
+      { status: 403 }
+    );
+  }
+
   try {
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
@@ -54,7 +64,6 @@ export async function GET() {
         });
         addedCount++;
       } else {
-        // Beholder isVisible og andre admin-felter
         await setDoc(ref, {
           ...event,
           updatedAt: serverTimestamp(),
