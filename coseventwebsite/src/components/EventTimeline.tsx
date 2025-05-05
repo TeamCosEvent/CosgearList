@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import cityDataRaw from '@/utils/city-lookup.json';
 
 export type Event = {
   id: string;
@@ -15,35 +14,25 @@ export type Event = {
   createdAt?: import("firebase/firestore").Timestamp;
 };
 
-// Typesikring av JSON
-type CityInfo = { city: string; country: string; continent: string };
-const cityData = cityDataRaw as Record<string, CityInfo>;
-
-function normalizeCity(location: string): CityInfo | null {
-  const match = location.match(/where:\s*(.*)/i);
-  const rawCity = match?.[1]?.trim().toLowerCase();
-  if (!rawCity) return null;
-  return cityData[rawCity] || null;
-}
-
 export default function EventTimeline({ events = [] }: { events?: Event[] }) {
   const [continentFilter, setContinentFilter] = useState('Alle');
   const [countryFilter, setCountryFilter] = useState('Alle');
   const [cityFilter, setCityFilter] = useState('Alle');
 
+  // Midlertidig filtrering basert på tekst, frem til en ny løsning kommer
   const enrichedEvents = useMemo(() => {
     return events.map((e) => {
-      const cityInfo = normalizeCity(e.location);
+      const locationParts = e.location.split(',').map((p) => p.trim());
+      const [city, country, continent] = locationParts;
       return {
         ...e,
-        city: cityInfo?.city || 'Ukjent',
-        country: cityInfo?.country || 'Ukjent',
-        continent: cityInfo?.continent || 'Ukjent',
+        city: city || 'Ukjent',
+        country: country || 'Ukjent',
+        continent: continent || 'Ukjent',
       };
     });
   }, [events]);
 
-  // Hent unike verdier
   const continents = useMemo(() => {
     const all = enrichedEvents.map((e) => e.continent);
     return ['Alle', ...Array.from(new Set(all))];
