@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 export type Event = {
   id: string;
   title: string;
-  date: string;
+  date: string; // Forutsetter at dette er i et ISO-format eller noe Date-parsable
   location: string;
   link: string;
   source?: string;
@@ -16,23 +16,41 @@ export type Event = {
 
 export default function EventTimeline({ events = [] }: { events?: Event[] }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const filteredEvents = useMemo(() => {
-    if (!searchQuery.trim()) return events;
-    const lowerQuery = searchQuery.toLowerCase();
-    return events.filter((e) => e.location.toLowerCase().includes(lowerQuery));
-  }, [events, searchQuery]);
+    return events.filter((e) => {
+      const matchesLocation = e.location.toLowerCase().includes(searchQuery.toLowerCase());
+      const eventDate = new Date(e.date);
+      const isAfterFromDate = fromDate ? eventDate >= new Date(fromDate) : true;
+      const isBeforeToDate = toDate ? eventDate <= new Date(toDate) : true;
+      return matchesLocation && isAfterFromDate && isBeforeToDate;
+    });
+  }, [events, searchQuery, fromDate, toDate]);
 
   return (
     <div>
-      {/* Søkeinput */}
-      <div className="mb-6">
+      {/* Filtreringsinput */}
+      <div className="mb-6 flex flex-col md:flex-row gap-4">
         <input
           type="text"
           placeholder="Søk etter by, land eller sted..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full md:w-1/2 bg-black border border-[var(--cosevent-yellow)] text-white px-3 py-2 rounded"
+          className="w-full md:w-1/3 bg-black border border-[var(--cosevent-yellow)] text-white px-3 py-2 rounded"
+        />
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className="w-full md:w-1/3 bg-black border border-[var(--cosevent-yellow)] text-white px-3 py-2 rounded"
+        />
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          className="w-full md:w-1/3 bg-black border border-[var(--cosevent-yellow)] text-white px-3 py-2 rounded"
         />
       </div>
 
