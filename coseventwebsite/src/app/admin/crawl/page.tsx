@@ -10,7 +10,7 @@ export default function ManualCrawler() {
     setLoading(true);
     setStatus('Kjører crawler...');
     try {
-      const res = await fetch('/api/crawlAnimeCons');
+      const res = await fetch('/api/crawlMagicon');
       const json = await res.json();
       setStatus(json.message || 'Crawler ferdig!');
     } catch {

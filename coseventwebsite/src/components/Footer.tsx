@@ -28,9 +28,8 @@ export default function Footer() {
       {/* Clickable Legal & Dashboard Links */}
       <div className="mt-1 text-xs text-[var(--cosevent-text-muted)] space-x-2">
         <Link href="/terms" className="hover:text-[var(--cosevent-yellow)] transition">Terms of Service</Link> |
-        <Link href="/privacy" className="hover:text-[var(--cosevent-yellow)] transition"> Privacy Policy</Link> |
-        <Link href="/admin-landing" className="hover:text-[var(--cosevent-yellow)] transition"> Dashboard</Link>
-      </div>
+        <Link href="/privacy" className="hover:text-[var(--cosevent-yellow)] transition"> Privacy Policy</Link>       
+        </div>
 
       {/* Social Icons */}
       <div className="flex justify-center mt-3 space-x-5 text-xl">

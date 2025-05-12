@@ -1,4 +1,3 @@
-// Oppdatert EventTimeline: filtrering skjer kun når slutt-dato velges
 'use client';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
@@ -181,7 +180,7 @@ export default function EventTimeline({ events = [] }: Props) {
 
       {startDate && endDate && (
         <p className="text-sm text-white/70 mb-6">
-          Viser events fra {format(startDate, 'dd.MM.yyyy')} til {format(endDate, 'dd.MM.yyyy')}
+          Showing events from {format(startDate, 'dd.MM.yyyy')} to {format(endDate, 'dd.MM.yyyy')}
         </p>
       )}
 
@@ -190,7 +189,7 @@ export default function EventTimeline({ events = [] }: Props) {
           <p className="text-white/60">
             Ingen eventer funnet.
             <br />
-            <span className="text-sm text-white/40">Tips: Nullstill filteret eller søk bredere.</span>
+            <span className="text-sm text-white/40">Tip: Remove filters or widen search.</span>
           </p>
         ) : (
           filteredEvents.map((event) => (
@@ -210,7 +209,7 @@ export default function EventTimeline({ events = [] }: Props) {
                   rel="noopener noreferrer"
                   className="text-[var(--cosevent-white)] underline text-sm hover:text-white transition"
                 >
-                  ➔ Mer info
+                  ➔ More info
                 </a>
               </div>
             </div>
