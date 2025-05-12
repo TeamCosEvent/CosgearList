@@ -2,6 +2,8 @@ import "./globals.css";
 import Footer from "@/components/Footer";
 import NavbarSwitcher from "@/components/NavbarSwitcher";
 import BackToTopButton from "@/components/BackToTopButton";
+import 'react-date-range/dist/styles.css';        
+import 'react-date-range/dist/theme/default.css'; 
 
 export const metadata = {
   title: "CosEvents",

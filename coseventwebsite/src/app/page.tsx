@@ -58,11 +58,11 @@ export default function ConventionsPage() {
     <main className="flex flex-col items-center px-4 md:px-16 py-16 bg-[var(--cosevent-bg)] text-[var(--cosevent-text-light)] font-sans">
       <div className="w-full max-w-5xl">
         <h2 className="text-4xl md:text-5xl font-bold text-[var(--cosevent-white)] mb-4">
-          Kommende cosplay conventions
+          Upcoming cosplay conventions
         </h2>
 
         <h3 className="mb-8 text-lg text-[var(--cosevent-text-muted)]">
-          Her finner du en oversikt over planlagte conventions i Norge og Norden. Listen oppdateres automatisk. Klikk på lenkene for mer info.
+          Find upcoming events worldwide! Click the link to find more information about the page.
         </h3>
 
         {error && (
