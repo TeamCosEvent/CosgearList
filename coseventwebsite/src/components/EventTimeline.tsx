@@ -1,4 +1,4 @@
-// Oppdatert EventTimeline uten søk-knapp – filtrering skjer automatisk når slutt-dato velges
+// Oppdatert EventTimeline: filtrering skjer kun når slutt-dato velges
 'use client';
 
 import { useMemo, useState, useRef, useEffect } from 'react';
@@ -10,57 +10,60 @@ import { Event } from './types';
 
 type Props = { events?: Event[] };
 
+function normalizeDateString(dateStr: string): string {
+  return dateStr
+    .replace(/[–—−-]/g, '-')
+    .replace(/(\d+)\.(\d+)\.(\d{4})/, '$1-$2-$3')
+    .replace(/\./g, '')
+    .replace(/ +/g, ' ')
+    .trim();
+}
+
 function parseEventDateRange(dateStr: string): { start: Date; end: Date } | null {
-  const tryFormats = [
-    { format: 'd MMMM yyyy', locales: [nb, enUS] },
-    { format: 'MMMM d, yyyy', locales: [enUS, nb] },
-    { format: 'd.MM.yyyy', locales: [nb, enUS] },
+  const cleaned = normalizeDateString(dateStr);
+
+  const formats = [
+    { pattern: /^(\d+)-(\d+)\s(\w+)\s(\d{4})$/, format: 'd MMMM yyyy', locales: [nb, enUS] },
+    { pattern: /^(\w+)\s(\d+)-(\d+),\s(\d{4})$/, format: 'MMMM d yyyy', locales: [enUS, nb] },
+    { pattern: /^(\d+)-(\d+)-(\d+)-(\d{4})$/, format: 'd-M-d-M-yyyy', locales: [nb, enUS] },
+    { pattern: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, format: 'd-M-yyyy', locales: [nb, enUS] },
   ];
 
-  const rangePatterns = [
-    /^\w+\s(\d+)-(\d+),\s(\d{4})$/, // June 13-15, 2025
-    /^(\d+)-(\d+)\s\w+\s(\d{4})$/, // 13-15 June 2025
-    /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/, // 13.06.2025
-  ];
-
-  try {
-    for (const pattern of rangePatterns) {
-      const match = dateStr.match(pattern);
-      if (match) {
-        if (pattern === rangePatterns[0]) {
-          const [_, startDay, endDay, year] = match;
-          for (const locale of [nb, enUS]) {
-            const month = dateStr.match(/^([a-zA-Z]+)/)?.[1] ?? '';
-            const start = parse(`${startDay} ${month} ${year}`, 'd MMMM yyyy', new Date(), { locale });
-            const end = parse(`${endDay} ${month} ${year}`, 'd MMMM yyyy', new Date(), { locale });
-            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) return { start, end };
-          }
-        } else if (pattern === rangePatterns[1]) {
-          const [_, startDay, endDay, month, year] = match;
-          for (const locale of [nb, enUS]) {
-            const start = parse(`${startDay} ${month} ${year}`, 'd MMMM yyyy', new Date(), { locale });
-            const end = parse(`${endDay} ${month} ${year}`, 'd MMMM yyyy', new Date(), { locale });
-            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) return { start, end };
-          }
-        } else if (pattern === rangePatterns[2]) {
-          const [_, day, month, year] = match;
-          const date = parse(`${day}.${month}.${year}`, 'd.MM.yyyy', new Date(), { locale: nb });
-          return { start: date, end: date };
-        }
-      }
-    }
-
-    for (const { format: f, locales } of tryFormats) {
+  for (const { pattern, format: fmt, locales } of formats) {
+    const match = cleaned.match(pattern);
+    if (match) {
+      const groups = match.slice(1);
       for (const locale of locales) {
-        const parsed = parse(dateStr, f, new Date(), { locale });
-        if (!isNaN(parsed.getTime())) return { start: parsed, end: parsed };
+        try {
+          if (groups.length === 4) {
+            const [a, b, c, d] = groups;
+            if (isNaN(Number(c))) {
+              const [startDay, endDay, month, year] = groups;
+              const start = parse(`${startDay} ${month} ${year}`, fmt, new Date(), { locale });
+              const end = parse(`${endDay} ${month} ${year}`, fmt, new Date(), { locale });
+              if (!isNaN(start.getTime()) && !isNaN(end.getTime())) return { start, end };
+            }
+          } else if (groups.length === 3) {
+            const date = parse(groups.join(' '), fmt, new Date(), { locale });
+            if (!isNaN(date.getTime())) return { start: date, end: date };
+          }
+        } catch {}
       }
     }
-
-    return null;
-  } catch {
-    return null;
   }
+
+  const singleFormats = ['d MMMM yyyy', 'MMMM d, yyyy', 'd.MM.yyyy'];
+  for (const fmt of singleFormats) {
+    for (const locale of [nb, enUS]) {
+      try {
+        const single = parse(cleaned, fmt, new Date(), { locale });
+        if (!isNaN(single.getTime())) return { start: single, end: single };
+      } catch {}
+    }
+  }
+
+  console.warn('Failed to parse date:', dateStr);
+  return null;
 }
 
 export default function EventTimeline({ events = [] }: Props) {
@@ -98,7 +101,7 @@ export default function EventTimeline({ events = [] }: Props) {
       .filter(event => {
         if (event.parsedEnd < today) return false;
         const locationMatch = event.location.toLowerCase().includes(searchQuery.toLowerCase());
-        if (!startDate || !endDate) return locationMatch;
+        if (!startDate || !endDate) return true;
         return (
           locationMatch &&
           (isWithinInterval(event.parsedStart, { start: startDate, end: endDate }) ||
@@ -113,7 +116,7 @@ export default function EventTimeline({ events = [] }: Props) {
       <div className="mb-8 flex flex-col sm:flex-row gap-4 sm:items-start py-4">
         <input
           type="text"
-          placeholder="Søk etter by, land eller sted..."
+          placeholder="Search by city or country..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full sm:w-1/2 border border-[var(--cosevent-yellow)] text-white bg-black px-3 py-2 rounded"
@@ -126,7 +129,7 @@ export default function EventTimeline({ events = [] }: Props) {
           >
             {startDate && endDate
               ? `Fra ${format(startDate, 'dd.MM.yyyy')} til ${format(endDate, 'dd.MM.yyyy')}`
-              : 'Velg dato'}
+              : 'Date'}
           </button>
 
           {showPicker && (
@@ -137,12 +140,20 @@ export default function EventTimeline({ events = [] }: Props) {
               <DateRange
                 editableDateInputs
                 onChange={(item) => {
-                  setPendingRange([item.selection]);
-                  if (item.selection.startDate && item.selection.endDate) {
-                    setDateRange([item.selection]);
-                    setShowPicker(false);
-                  }
-                }}
+                setPendingRange([item.selection]);
+
+                const { startDate, endDate } = item.selection;
+
+                if (
+                  startDate &&
+                  endDate &&
+                  startDate.getTime() !== endDate.getTime()
+                ) {
+                  setDateRange([item.selection]);
+                  setShowPicker(false);
+                }
+              }}
+
                 moveRangeOnFirstSelection={false}
                 ranges={pendingRange}
                 locale={nb}
@@ -164,7 +175,7 @@ export default function EventTimeline({ events = [] }: Props) {
           }}
           className="w-full sm:w-auto border border-[var(--cosevent-yellow)] text-white bg-black px-4 py-2 rounded"
         >
-          Nullstill filter
+          Remove filter
         </button>
       </div>
 
@@ -199,7 +210,7 @@ export default function EventTimeline({ events = [] }: Props) {
                   rel="noopener noreferrer"
                   className="text-[var(--cosevent-white)] underline text-sm hover:text-white transition"
                 >
-                  ➜ Mer info
+                  ➔ Mer info
                 </a>
               </div>
             </div>
