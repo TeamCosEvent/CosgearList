@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
-import EventTimeline, { Event } from '@/components/EventTimeline';
+import EventTimeline from '@/components/EventTimeline';
+import { Event } from '@/components/types';
+
 
 // Parser for dato (brukes til sortering)
 function parseDate(dateStr: string): number {

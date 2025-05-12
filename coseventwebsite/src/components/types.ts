@@ -4,4 +4,8 @@ export type Event = {
   date: string;
   location: string;
   link: string;
+  isVisible?: boolean;
+  isNew?: boolean;
+  source?: string;
+  venue?: string;
 };
