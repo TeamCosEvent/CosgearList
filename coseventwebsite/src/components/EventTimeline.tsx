@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { DateRange, Range } from 'react-date-range';
-import { parse, isWithinInterval, endOfYear } from 'date-fns';
+import { parse, isWithinInterval } from 'date-fns';
 import { format } from 'date-fns';
 import { nb, enUS } from 'date-fns/locale';
 import { Event } from './types';
@@ -91,6 +91,8 @@ export default function EventTimeline({ events = [] }: Props) {
 
   const filteredEvents = useMemo(() => {
     const today = new Date();
+    const term = searchQuery.toLowerCase();
+
     return events
       .map(event => {
         const parsed = parseEventDateRange(event.date);
@@ -99,12 +101,20 @@ export default function EventTimeline({ events = [] }: Props) {
       .filter((event): event is Event & { parsedStart: Date; parsedEnd: Date } => !!event)
       .filter(event => {
         if (event.parsedEnd < today) return false;
-        const locationMatch = event.location.toLowerCase().includes(searchQuery.toLowerCase());
-        if (!startDate || !endDate) return true;
+
+        const matchesQuery =
+          event.title.toLowerCase().includes(term) ||
+          event.location.toLowerCase().includes(term) ||
+          event.source?.toLowerCase().includes(term);
+
+        if (!startDate || !endDate) return matchesQuery;
+
         return (
-          locationMatch &&
-          (isWithinInterval(event.parsedStart, { start: startDate, end: endDate }) ||
-           isWithinInterval(event.parsedEnd, { start: startDate, end: endDate }))
+          matchesQuery &&
+          (
+            isWithinInterval(event.parsedStart, { start: startDate, end: endDate }) ||
+            isWithinInterval(event.parsedEnd, { start: startDate, end: endDate })
+          )
         );
       })
       .sort((a, b) => a.parsedStart.getTime() - b.parsedStart.getTime());
@@ -115,7 +125,7 @@ export default function EventTimeline({ events = [] }: Props) {
       <div className="mb-8 flex flex-col sm:flex-row gap-4 sm:items-start py-4">
         <input
           type="text"
-          placeholder="Search by city or country..."
+          placeholder="Search by title, city, country or source..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full sm:w-1/2 border border-[var(--cosevent-yellow)] text-white bg-black px-3 py-2 rounded"
@@ -139,20 +149,19 @@ export default function EventTimeline({ events = [] }: Props) {
               <DateRange
                 editableDateInputs
                 onChange={(item) => {
-                setPendingRange([item.selection]);
+                  setPendingRange([item.selection]);
 
-                const { startDate, endDate } = item.selection;
+                  const { startDate, endDate } = item.selection;
 
-                if (
-                  startDate &&
-                  endDate &&
-                  startDate.getTime() !== endDate.getTime()
-                ) {
-                  setDateRange([item.selection]);
-                  setShowPicker(false);
-                }
-              }}
-
+                  if (
+                    startDate &&
+                    endDate &&
+                    startDate.getTime() !== endDate.getTime()
+                  ) {
+                    setDateRange([item.selection]);
+                    setShowPicker(false);
+                  }
+                }}
                 moveRangeOnFirstSelection={false}
                 ranges={pendingRange}
                 locale={nb}
