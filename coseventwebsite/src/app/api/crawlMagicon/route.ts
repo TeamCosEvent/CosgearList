@@ -9,7 +9,6 @@ export async function GET() {
   try {
     const browser = await puppeteer.launch({
       headless: true, // Sikrer moderne headless mode som støttes av Vercel
-      executablePath: executablePath(), // Viktig for Vercel å finne Chrome
       args: ['--no-sandbox', '--disable-setuid-sandbox'], // Nødvendig for Vercel-miljø
     });
 
