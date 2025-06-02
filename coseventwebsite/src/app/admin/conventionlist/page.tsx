@@ -9,7 +9,6 @@ import {
   deleteDoc,
   Timestamp,
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/firebase/firebaseConfig';
 import AdminNavbar from '@/components/AdminNavbar';
 
@@ -29,6 +28,7 @@ export default function ConventionListPage() {
   const [events, setEvents] = useState<ConventionEvent[]>([]);
   const [search, setSearch] = useState('');
   const [crawlerStatus, setCrawlerStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
+  const [crawlerMessage, setCrawlerMessage] = useState<string>('');
 
   useEffect(() => {
     const q = collection(db, 'conventions');
@@ -55,17 +55,23 @@ export default function ConventionListPage() {
 
   const triggerCrawler = async () => {
     setCrawlerStatus('running');
+    setCrawlerMessage('');
     try {
-      const functions = getFunctions();
-      const run = httpsCallable(functions, 'runCrawlers');
-      const result = await run();
-      console.log(result.data);
+      const res = await fetch('/api/crawlMagicon');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Feil ved crawling');
+
+      setCrawlerMessage(data.message || 'Crawler kjørt.');
       setCrawlerStatus('success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Feil ved crawler:', error);
+      setCrawlerMessage('Feil under kjøring av crawler.');
       setCrawlerStatus('error');
     } finally {
-      setTimeout(() => setCrawlerStatus('idle'), 3000);
+      setTimeout(() => {
+        setCrawlerStatus('idle');
+        setCrawlerMessage('');
+      }, 5000);
     }
   };
 
@@ -88,11 +94,21 @@ export default function ConventionListPage() {
 
         <button
           onClick={triggerCrawler}
-          className="mb-6 btn-primary"
+          className="mb-4 btn-primary"
           disabled={crawlerStatus === 'running'}
         >
           {crawlerStatus === 'running' ? 'Kjører crawler...' : 'Kjør crawler manuelt'}
         </button>
+
+        {crawlerMessage && (
+          <p
+            className={`mb-6 text-sm ${
+              crawlerStatus === 'error' ? 'text-red-400' : 'text-green-400'
+            }`}
+          >
+            {crawlerMessage}
+          </p>
+        )}
 
         <input
           type="text"
@@ -121,19 +137,21 @@ export default function ConventionListPage() {
                 <td className="p-2">{event.location}</td>
                 <td className="p-2">{event.source}</td>
                 <td className="p-2">{event.isVisible ? '✅' : '❌'}</td>
-                <td className="flex gap-2 p-2">
-                  <button
-                    className="text-blue-600 underline"
-                    onClick={() => toggleVisibility(event.id, event.isVisible)}
-                  >
-                    {event.isVisible ? 'Skjul' : 'Vis'}
-                  </button>
-                  <button
-                    className="text-red-600 underline"
-                    onClick={() => deleteEvent(event.id)}
-                  >
-                    Slett
-                  </button>
+                <td className="p-2">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      className="text-blue-600 underline"
+                      onClick={() => toggleVisibility(event.id, event.isVisible)}
+                    >
+                      {event.isVisible ? 'Skjul' : 'Vis'}
+                    </button>
+                    <button
+                      className="text-red-600 underline"
+                      onClick={() => deleteEvent(event.id)}
+                    >
+                      Slett
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

@@ -20,9 +20,6 @@ export default function AdminNavbar() {
         <Link href="/admin" className={`nav-link ${pathname === "/admin" ? "active" : ""}`}>
           Dashboard
         </Link>
-        <Link href="/admin/crawl" className={`nav-link ${pathname === "/admin/forms" ? "active" : ""}`}>
-         Crawler
-        </Link>
         <Link href="/admin/conventionlist" className={`nav-link ${pathname === "/admin" ? "active" : ""}`}>
           Conventions
         </Link>
@@ -41,9 +38,6 @@ export default function AdminNavbar() {
         <div className="absolute top-full left-0 w-full bg-[var(--cosevent-darkblue)] p-4 shadow-md flex flex-col items-center">
           <Link href="/admin" className={`nav-link ${pathname === "/admin" ? "active" : ""}`}>
           Dashboard
-          </Link>
-          <Link href="/admin/crawl" className={`nav-link ${pathname === "/admin/forms" ? "active" : ""}`}>
-           Crawler
           </Link>
           <Link href="/admin/conventionlist" className={`nav-link ${pathname === "/admin" ? "active" : ""}`}>
             Conventions
