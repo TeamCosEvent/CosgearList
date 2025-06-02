@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "api/crawlMagicon.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+  "buildCommand": "npm install && npx puppeteer browsers install chrome && next build"
+}

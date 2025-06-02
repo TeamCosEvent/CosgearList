@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import puppeteer from 'puppeteer';
+import puppeteer, { executablePath } from 'puppeteer';
 import { db } from '../../../firebase/firebaseConfig';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -7,7 +7,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      headless: true, // Sikrer moderne headless mode som støttes av Vercel
+      executablePath: executablePath(), // Viktig for Vercel å finne Chrome
+      args: ['--no-sandbox', '--disable-setuid-sandbox'], // Nødvendig for Vercel-miljø
+    });
+
     const page = await browser.newPage();
     await page.goto('https://www.magicon.no/community/', { waitUntil: 'networkidle2' });
     await page.waitForSelector('li.av-milestone', { timeout: 5000 });
@@ -54,7 +59,6 @@ export async function GET() {
         });
         addedCount++;
       } else {
-        // Beholder isVisible og andre admin-felter
         await setDoc(ref, {
           ...event,
           updatedAt: serverTimestamp(),
