@@ -6,19 +6,18 @@ import { db } from '@/firebase/firebaseConfig';
 import EventTimeline from '@/components/EventTimeline';
 import { Event } from '@/components/types';
 
-
-// Parser for dato (brukes til sortering)
+// ✅ Robust parser for dato
 function parseDate(dateStr: string): number {
   if (!dateStr) return Infinity;
-  if (dateStr.toLowerCase().includes('tba') || dateStr.toLowerCase().includes('ukjent')) {
-    return Infinity;
-  }
+  const lower = dateStr.toLowerCase();
+  if (lower.includes('tba') || lower.includes('ukjent')) return Infinity;
 
   const parts = dateStr.match(/(\d{1,2})(?:[-–]\d{1,2})?\s+([A-Za-z]+)\s+(\d{4})/);
   if (!parts) return Infinity;
 
   const [, day, month, year] = parts;
-  return new Date(`${month} ${day}, ${year}`).getTime();
+  const date = new Date(`${month} ${day}, ${year}`);
+  return isNaN(date.getTime()) ? Infinity : date.getTime();
 }
 
 export default function ConventionsPage() {
@@ -38,13 +37,15 @@ export default function ConventionsPage() {
           };
         });
 
+        // ✅ Filtrering: bare synlige og fremtidige events
+        const now = Date.now();
         const visibleOnly = docs.filter((event) => {
-          const isVisible = event.isVisible !== false;
           const eventTime = parseDate(event.date);
-          const now = Date.now();
-          return isVisible && eventTime >= now;
+          return event.isVisible !== false && eventTime >= now;
         });
-                const sorted = visibleOnly.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+
+        // ✅ Sorter etter dato
+        const sorted = visibleOnly.sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
         setEvents(sorted);
       } catch (err) {
