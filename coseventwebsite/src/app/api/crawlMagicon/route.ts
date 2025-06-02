@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import puppeteer, { executablePath } from 'puppeteer';
+import puppeteer from 'puppeteer';
 import { db } from '../../../firebase/firebaseConfig';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const browser = await puppeteer.launch({
-      headless: true, // Sikrer moderne headless mode som støttes av Vercel
-      args: ['--no-sandbox', '--disable-setuid-sandbox'], // Nødvendig for Vercel-miljø
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();
